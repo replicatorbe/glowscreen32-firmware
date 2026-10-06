@@ -1,10 +1,8 @@
 # État du projet GlowScreen32 — 2026-10-06
 
-**Firmware 2.3.1 (compilé, à publier ; 2.3.0 en service, OTA validé) · contrat d'API v3.0 ·
-plugin Jeedom 3.0**
+**Firmware 2.3.1 (en service, OTA validé) · contrat d'API v3.1 · plugin Jeedom 3.2**
 
-Une fois publiée par OTA et validée, la 2.3.1 sera la version en service. Le plugin part
-toujours en premier (contrat, « Négociation de schéma ») ; c'est le cas.
+Les deux moitiés sont publiées sur GitHub (dépôts publics, documentation anonymisée).
 
 ---
 
@@ -16,7 +14,34 @@ toujours en premier (contrat, « Négociation de schéma ») ; c'est le cas.
 | 2.2.0 | réseau hors de l'affichage, attente longue, commandes à distance, diagnostics, NVS, menu, portail, calibration à l'écran ; validation renforcée (6 preuves, 10 min) et mémoire des versions rejetées | en service et validée ; **OTA déclenché à distance en moins d'une seconde** (commande `ota` livrée par un ping retenu) ; second **retour arrière** prouvé |
 | 2.2.1 | — | **`rst=wdt` intermittent trouvé et corrigé** : `BoundedStream::readBytes` attendait en boucle active (`Stream::timedRead`) sur le cœur 0, dont IDLE est surveillé avec panique. Constaté pendant sa période d'essai, selon la qualité radio |
 | 2.3.0 | schéma 3 : tuiles `view`, `values`, `ui.readonly`, cache v04 | en service, OTA validé ; **page État avec de vraies tuiles** |
-| 2.3.1 | corrections de revue complète (ci-dessous) | **pas encore** |
+| 2.3.1 | corrections de revue complète (ci-dessous) | en service : OTA déclenché à distance, **validé** (927 s sans retour arrière) |
+
+## Plugin 3.1 → 3.2 et usages réels — 2026-10-06
+
+- **Plugin 3.1** : corrections de revue (un bouton non résolu garde son rang, `press` refusé
+  si le bouton a changé depuis le `layout` servi, coût SQL d'un `ping` divisé par 4, mot de
+  passe Wi-Fi hors du cache Jeedom, Dupliquer réparé, avertissement sur les commandes
+  sensibles).
+- **Plugin 3.2 — pages masquables (contrat v3.1)** : case « Afficher la page » par page, et
+  commandes de scénario *Afficher la page*, *Masquer la page*, *N’afficher que la page*,
+  *Afficher toutes les pages*, info *Pages affichées*. Aucun changement de firmware.
+- **Écran de test** : page « État » (porte, verrou, portail, températures) et page
+  « Alarme » (mode, alarme en cours, liaison SIA, cohérence cloud) en tuiles valeur.
+- **Scénario « alarme armée »** dans Jeedom : déclenché par l'état d'armement **reçu en SIA**
+  (local, instantané, indépendant d'Internet — le cloud ne sert que de contrôle de
+  cohérence) : armée → *N’afficher que la page* Alarme + message ; désarmée → *Afficher
+  toutes les pages*. Testé : branche « sinon » par lancement manuel, branche « alors » en
+  jouant ses commandes sur l'écran.
+
+Pièges relevés : Jeedom retire l'apostrophe droite des noms de commande (utiliser `’`) ; un
+hub sans délai d'alerte de communication ne fait jamais périmer ses tuiles valeur.
+
+## Prochaines étapes envisagées
+
+1. Commande `wifi` **« en réserve »** : identifiants essayés seulement quand le réseau actuel
+   tombe — pour changer le mot de passe de la box sans décrocher le parc.
+2. Sûreté des boutons : confirmation (appui maintenu) pour les commandes sensibles.
+3. Option « page de démarrage » et retour automatique après inactivité.
 
 ## Firmware 2.3.1 — corrections de revue
 
