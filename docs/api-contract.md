@@ -1,4 +1,4 @@
-# Contrat d'API GlowScreen32 — v3.0
+# Contrat d'API GlowScreen32 — v3.1
 
 Contrat figé entre le plugin Jeedom et le firmware ESP32. **Les deux côtés doivent s'y tenir :
 toute modification se décide ici d'abord.**
@@ -1217,6 +1217,56 @@ Celles du schéma 2, plus :
 
 ---
 
+# Pages affichées — v3.1 (plugin seul, schéma inchangé)
+
+Une page configurée dans Jeedom peut être **masquée** : elle reste dans la configuration, mais
+n'est pas servie à l'écran. Une case « Afficher la page » par page dans l'interface, et des
+commandes d'action utilisables par un scénario (« alarme armée → n'afficher que la page État »).
+
+**Le schéma ne change pas, le firmware non plus.** Une page masquée est simplement absente de
+la réponse `layout` : la carte ne sait même pas qu'elle existe. Les écrans déjà installés en
+profitent sans OTA.
+
+## Ce que le plugin sert quand des pages sont masquées
+
+| Règle | Raison |
+|---|---|
+| les pages masquées sont **omises** ; les pages visibles sont **renumérotées** `0 … n-1` dans leur ordre de configuration | la page 0 reste la page d'accueil : masquer la première page fait démarrer l'écran sur la suivante |
+| un `parent` qui désigne une page masquée est remplacé par le plus proche ancêtre visible, à défaut la page 0 | le bouton retour ne mène jamais nulle part |
+| un bouton `nav` vers une page masquée est **retiré** de sa page | un bouton qui ne mène à rien est pire qu'une case vide |
+| les `id` sont recalculés sur ce qui est servi (aplatissement des seules pages visibles), dans chaque schéma | même règle que les tuiles `view` en schéma 2 |
+| schéma 1 : les 6 premiers boutons **des pages visibles** | |
+| il reste **toujours au moins une page visible** : l'interface refuse de tout masquer, et une commande qui masquerait la dernière page visible est **refusée et journalisée** | un écran sans page n'affiche rien et ne sert à rien |
+
+⚠️ **Changer la visibilité d'une page change `version`.** C'est un changement de
+configuration : la carte recharge sa mise en page (≈ 1 s grâce à l'attente longue). Pendant ce
+court instant, les `id` qu'elle détient sont périmés — c'est exactement le cas que couvrent déjà
+le refus d'appui sur mise en page périmée (firmware 2.3.1) et le refus côté plugin d'un `press`
+dont le bouton a changé depuis le `layout` servi. Aucun appui ne peut viser le bouton d'à côté.
+
+## Commandes Jeedom de l'équipement
+
+| Commande | Type | Effet |
+|---|---|---|
+| Afficher la page | action, liste des pages configurées | rend la page visible |
+| Masquer la page | action, liste des pages configurées | la masque (refusé si c'est la dernière visible) |
+| Afficher toutes les pages | action | rend toutes les pages visibles |
+| N'afficher que la page | action, liste des pages configurées | masque toutes les autres |
+| Pages affichées | info, texte | titres des pages visibles, pour les conditions de scénario |
+
+Les pages y sont désignées par leur **position de configuration** et leur **titre**, jamais par
+leur numéro servi, qui change avec les masquages. La commande à distance `page` (v2.2) reçoit,
+elle, le numéro **servi** au moment de sa livraison : le plugin traduit ; une page masquée
+entre-temps rend la commande sans effet (journalisé).
+
+> **Pourquoi une écriture de configuration depuis une commande.** La règle v2.2 interdit
+> l'enregistrement de l'eqLogic depuis l'**API des cartes** (requêtes retenues 25 s). Une
+> commande de scénario est un autre chemin : elle relit l'équipement juste avant d'écrire et ne
+> modifie que l'indicateur de visibilité, pour ne jamais écraser une configuration enregistrée
+> entre-temps.
+
+---
+
 ## Historique des corrections de terrain
 
 Chacune vient d'une panne constatée, pas d'une revue de conception. Les réintroduire coûterait
@@ -1253,3 +1303,4 @@ le même temps une seconde fois.
 | **v3.0** | validation OTA d'un écran **non déclaré** par `unknown_device` — sinon retour arrière et rejet d'une version saine après chaque OTA |
 | **v3.0** | bornes de longueur en **caractères** : un firmware dimensionné en octets coupait en silence un libellé accentué de 24 caractères |
 | **v3.0** | nombres au format **français** (`21,4 °C`) au bandeau comme sur les tuiles — le bandeau écrivait `21.4` |
+| **v3.1** | pages **masquables** (case par page + commandes de scénario), sans changement de schéma ni de firmware ; au moins une page toujours visible ; les `nav` vers une page masquée sont retirés |
