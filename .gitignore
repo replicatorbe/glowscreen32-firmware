@@ -1,0 +1,25 @@
+# PlatformIO
+.pio/
+.vscode/
+.clang_complete
+.gcc-flags.json
+
+# Secrets : ne JAMAIS committer les identifiants Wi-Fi ni la clé API Jeedom.
+# Le gabarit versionné est src/secrets.h.example
+src/secrets.h
+
+# macOS
+.DS_Store
+
+# Python (outils de génération des polices et icônes)
+__pycache__/
+*.pyc
+
+# Accès, mots de passe et détails de l'installation réelle : uniquement en local
+*.local.md
+local/
+
+# Binaires firmware : jamais versionnés, même copiés hors de .pio/
+# (ils embarquent les valeurs d usine de src/secrets.h en clair)
+*.bin
+*.elf
